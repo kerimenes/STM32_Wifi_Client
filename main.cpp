@@ -22,7 +22,6 @@ wifi_dataready pin (PE_1), wifi reset pin (PE_8)
 /* Private variables ---------------------------------------------------------*/
 Serial pc(SERIAL_TX, SERIAL_RX);
 uint8_t RemoteIP[] = {192, 168, 2, 5};
-uint8_t RxData [500];
 char* modulename;
 uint8_t TxData[] = "STM32 : Hello!\n";
 uint16_t RxLen;
@@ -34,14 +33,14 @@ uint16_t myPort = 8002;
 int32_t socket = -1;
 
 int initWifi(void);
+int receiveWifiData();
+int parseData(uint8_t *data, uint16_t datalen);
 int openWifiClientConnection(uint8_t *ipaddr, uint16_t port);
 
 int main()
 {
-    uint16_t Datalen;
-    uint16_t Trials = CONNECTION_TRIAL_MAX;
-
     pc.baud(115200);
+    uint16_t Datalen;
 
     printf("\n");
     printf("Starting...");
@@ -62,15 +61,13 @@ int main()
 
     while(1){
         if(socket != -1) {
-            if(WIFI_ReceiveData(socket, RxData, sizeof(RxData), &Datalen, WIFI_READ_TIMEOUT) == WIFI_STATUS_OK){
-                if(Datalen > 0) {
-                    if(WIFI_SendData(socket, TxData, sizeof(TxData), &Datalen, WIFI_WRITE_TIMEOUT) != WIFI_STATUS_OK) {
-                        printf("> ERROR : Failed to send Data.\n");
-                    } 
+            ret = receiveWifiData();
+            if (ret == 0)
+                if(WIFI_SendData(socket, TxData, sizeof(TxData), &Datalen, WIFI_WRITE_TIMEOUT) != WIFI_STATUS_OK) {
+                    printf("> ERROR : Failed to send Data.\n");
                 }
-            } else {
-                printf("> ERROR : Failed to Receive Data.\n");
-            }
+        } else {
+            printf("> ERROR : Failed to Receive Data.\n");
         }
     }
 }
@@ -83,11 +80,11 @@ int initWifi(void)
         if(WIFI_GetMAC_Address(MAC_Addr) == WIFI_STATUS_OK) {
             printf("> es-wifi module MAC Address : %X:%X:%X:%X:%X:%X\n",
                    MAC_Addr[0],
-                   MAC_Addr[1],
-                   MAC_Addr[2],
-                   MAC_Addr[3],
-                   MAC_Addr[4],
-                   MAC_Addr[5]);
+                    MAC_Addr[1],
+                    MAC_Addr[2],
+                    MAC_Addr[3],
+                    MAC_Addr[4],
+                    MAC_Addr[5]);
         } else {
             printf("> ERROR : CANNOT get MAC address\n");
             ret = -1;
@@ -98,9 +95,9 @@ int initWifi(void)
             if(WIFI_GetIP_Address(IP_Addr) == WIFI_STATUS_OK) {
                 printf("> es-wifi module got IP Address : %d.%d.%d.%d\n",
                        IP_Addr[0],
-                       IP_Addr[1],
-                       IP_Addr[2],
-                       IP_Addr[3]);
+                        IP_Addr[1],
+                        IP_Addr[2],
+                        IP_Addr[3]);
             } else {
                 printf("> ERROR : es-wifi module CANNOT get IP address\n");
                 ret = -2;
@@ -121,9 +118,9 @@ int openWifiClientConnection(uint8_t *ipaddr, uint16_t port)
     int ret = 0;
     printf("> Trying to connect to Server: %d.%d.%d.%d:%d ...\n",
            ipaddr[0],
-           ipaddr[1],
-           ipaddr[2],
-           ipaddr[3],
+            ipaddr[1],
+            ipaddr[2],
+            ipaddr[3],
             myPort);
     uint16_t Trials = CONNECTION_TRIAL_MAX;
     while(Trials--) {
@@ -136,4 +133,28 @@ int openWifiClientConnection(uint8_t *ipaddr, uint16_t port)
     if (Trials == 0)
         ret = -1;
     return ret;
+}
+
+int receiveWifiData()
+{
+    uint8_t RxData [500];
+    uint16_t Datalen;
+    int ret = 0;
+    if (WIFI_ReceiveData(socket, RxData, sizeof(RxData), &Datalen, WIFI_READ_TIMEOUT) == WIFI_STATUS_OK) {
+        if (Datalen > 0) {
+            parseData(RxData, Datalen);
+        } else  {
+            printf("no data received\r\n");
+            ret = -1;
+        }
+    } else ret = -2;
+    return ret;
+}
+
+int parseData(uint8_t *data, uint16_t datalen)
+{
+    printf("Received Data::\r\n");
+    for (int i = 0; i < datalen; i++) {
+        printf ("%c", data[i]);
+    }
 }
