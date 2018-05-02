@@ -1,0 +1,28 @@
+{
+    "config": {
+        "wifi-ssid": {
+            "help": "WiFi SSID",
+            "value": "\"SSID\""
+        },
+        "wifi-password": {
+            "help": "WiFi Password",
+            "value": "\"PASSWORD\""
+        },
+        "server-ip-1": {
+            "help": "TCP server IP address 1st value",
+            "value": "192"
+        },
+        "server-ip-2": {
+            "help": "TCP server IP address 2nd value",
+            "value": "168"
+        },
+        "server-ip-3": {
+            "help": "TCP server IP address 3rd value",
+            "value": "1"
+        },
+        "server-ip-4": {
+            "help": "TCP server IP address 4th value",
+            "value": "101"
+        }
+    }
+}
