@@ -1,5 +1,6 @@
 #include "mbed.h"
 #include "wifi.h"
+
 /*------------------------------------------------------------------------------
 Hyperterminal settings: 115200 bauds, 8-bit data, no parity
 
@@ -34,6 +35,7 @@ int32_t socket = -1;
 
 int initWifi(void);
 int receiveWifiData();
+int sendWifiData(uint8_t *TxData);
 int parseData(uint8_t *data, uint16_t datalen);
 int openWifiClientConnection(uint8_t *ipaddr, uint16_t port);
 
@@ -63,9 +65,7 @@ int main()
         if(socket != -1) {
             ret = receiveWifiData();
             if (ret == 0)
-                if(WIFI_SendData(socket, TxData, sizeof(TxData), &Datalen, WIFI_WRITE_TIMEOUT) != WIFI_STATUS_OK) {
-                    printf("> ERROR : Failed to send Data.\n");
-                }
+                ret = sendWifiData(TxData);
         } else {
             printf("> ERROR : Failed to Receive Data.\n");
         }
@@ -144,7 +144,7 @@ int receiveWifiData()
         if (Datalen > 0) {
             parseData(RxData, Datalen);
         } else  {
-            printf("no data received\r\n");
+            printf("ERROR: no data received\r\n");
             ret = -1;
         }
     } else ret = -2;
@@ -156,5 +156,23 @@ int parseData(uint8_t *data, uint16_t datalen)
     printf("Received Data::\r\n");
     for (int i = 0; i < datalen; i++) {
         printf ("%c", data[i]);
+        // ToDo Parse Data
     }
+}
+
+int sendWifiData(uint8_t *TxData)
+{
+    uint16_t datalen = 0;
+    int ret = 0;
+    for (int i = 0; i < 9999; i++) {
+        if (TxData[i] == '\0') {
+            datalen = i;
+            break;
+        }
+    }
+    if (WIFI_SendData(socket, TxData, datalen, &datalen, WIFI_WRITE_TIMEOUT) != WIFI_STATUS_OK) {
+        printf("> ERROR : Failed to send Data.Data lenght: %d\n", datalen);
+        ret = -1;
+    }
+    return ret;
 }
